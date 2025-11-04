@@ -1,14 +1,18 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 import random
 import string
 
-# --- Configurações de Cores ---
-COR_FUNDO = "black"
-COR_TEXTO = "white"
+# --- Configurações de Cores e Tema ---
+COR_FUNDO = "#1e1e1e"
+COR_CARD = "#2d2d2d"
+COR_TEXTO = "#ffffff"
+COR_PRIMARIA = "#4CAF50"
+COR_SECUNDARIA = "#2196F3"
+COR_DESTAQUE = "#FF9800"
 
 
-# (Mantenha as funções 'gerar_senha' e 'copiar_senha' sem alterações)
+# --- Funções ---
 def gerar_senha():
     """Gera a senha com base nas opções selecionadas e no tamanho."""
     try:
@@ -37,6 +41,36 @@ def gerar_senha():
     senha = ''.join(random.choices(caracteres, k=tamanho))
     senha_gerada.set(senha)
 
+    # Atualizar força da senha
+    atualizar_forca_senha(senha)
+
+
+def atualizar_forca_senha(senha):
+    """Atualiza a barra de força da senha baseada na complexidade."""
+    if not senha:
+        barra_forca['value'] = 0
+        return
+
+    comprimento = len(senha)
+    tipos = sum([
+        any(c in string.ascii_uppercase for c in senha),
+        any(c in string.ascii_lowercase for c in senha),
+        any(c in string.digits for c in senha),
+        any(c in string.punctuation for c in senha)
+    ])
+
+    # Cálculo simples da força
+    forca = min(100, (comprimento * 3) + (tipos * 15))
+    barra_forca['value'] = forca
+
+    # Atualizar cor da barra
+    if forca < 40:
+        barra_forca.configure(style="Red.Horizontal.TProgressbar")
+    elif forca < 70:
+        barra_forca.configure(style="Yellow.Horizontal.TProgressbar")
+    else:
+        barra_forca.configure(style="Green.Horizontal.TProgressbar")
+
 
 def copiar_senha():
     """Copia a senha gerada para a área de transferência."""
@@ -50,129 +84,242 @@ def copiar_senha():
         messagebox.showwarning("Aviso", "Gere uma senha antes de copiar.")
 
 
+def alternar_visibilidade_senha():
+    """Alterna entre mostrar e ocultar a senha."""
+    if entrada_senha.cget('show') == '':
+        entrada_senha.config(show='•')
+        btn_visibilidade.config(text="👁️")
+    else:
+        entrada_senha.config(show='')
+        btn_visibilidade.config(text="👁️‍🗨️")
+
+
 # --- Configuração da Janela ---
 janela = tk.Tk()
-janela.title("Gerador de Senha")
-janela.geometry("1000x450")  # Aumentei um pouco a largura para caber os checkboxes
+janela.title("Gerador de Senhas Seguras")
+janela.geometry("500x600")
 janela.configure(bg=COR_FUNDO)
+janela.resizable(False, False)
+
+# --- Configurar estilos para a barra de progresso ---
+style = ttk.Style()
+style.theme_use('clam')
+style.configure("Green.Horizontal.TProgressbar", background="#4CAF50")
+style.configure("Yellow.Horizontal.TProgressbar", background="#FFC107")
+style.configure("Red.Horizontal.TProgressbar", background="#F44336")
 
 # --- Variáveis de Controle ---
 var_maiuscula = tk.IntVar(value=1)
 var_minuscula = tk.IntVar(value=1)
 var_numeros = tk.IntVar(value=1)
 var_especiais = tk.IntVar(value=0)
-
 senha_gerada = tk.StringVar()
 senha_gerada.set("")
 
-# --- Widgets ---
+# --- Layout Principal ---
 
-# 1. Título Grande
+# Cabeçalho
+frame_cabecalho = tk.Frame(janela, bg=COR_FUNDO)
+frame_cabecalho.pack(pady=20)
+
 titulo = tk.Label(
-    janela,
-    text="Gerador de Senha",
-    font=("Helvetica", 24, "bold"),
-    fg="#FFFFFF",
+    frame_cabecalho,
+    text="🔐 Gerador de Senhas",
+    font=("Arial", 20, "bold"),
+    fg=COR_TEXTO,
     bg=COR_FUNDO
 )
-titulo.pack(pady=20)
+titulo.pack()
 
-# 2. Frame para as Opções e Tamanho
-frame_opcoes = tk.Frame(janela, bg=COR_FUNDO)
-frame_opcoes.pack(pady=10, padx=20, fill='x')
+subtitulo = tk.Label(
+    frame_cabecalho,
+    text="Crie senhas fortes e seguras instantaneamente",
+    font=("Arial", 10),
+    fg="#CCCCCC",
+    bg=COR_FUNDO
+)
+subtitulo.pack(pady=5)
 
-# Label e Entrada para o Tamanho da Senha
+# Card Principal
+frame_card = tk.Frame(janela, bg=COR_CARD, relief=tk.RAISED, bd=1)
+frame_card.pack(padx=20, pady=10, fill='both', expand=True)
+
+# Seção de Configurações
+label_config = tk.Label(
+    frame_card,
+    text="Configurações da Senha",
+    font=("Arial", 12, "bold"),
+    fg=COR_TEXTO,
+    bg=COR_CARD
+)
+label_config.pack(anchor='w', padx=15, pady=(15, 10))
+
+# Tamanho da Senha
+frame_tamanho = tk.Frame(frame_card, bg=COR_CARD)
+frame_tamanho.pack(fill='x', padx=15, pady=5)
+
 label_tamanho = tk.Label(
-    frame_opcoes,
-    text="Tamanho da Senha:",
+    frame_tamanho,
+    text="Tamanho:",
+    font=("Arial", 10),
     fg=COR_TEXTO,
-    bg=COR_FUNDO
+    bg=COR_CARD
 )
-label_tamanho.grid(row=0, column=0, sticky='w', pady=5, padx=5)
+label_tamanho.pack(side='left')
 
-entrada_tamanho = tk.Entry(frame_opcoes, width=5, bg="gray20", fg=COR_TEXTO, insertbackground=COR_TEXTO)
-entrada_tamanho.insert(0, "8")
-entrada_tamanho.grid(row=0, column=1, sticky='w', pady=5, padx=5)
-
-# Separador visual
-tk.Label(
-    frame_opcoes,
-    text="--- Crie senhas fortes e seguras instantaneamente para proteger suas contas ---",
+entrada_tamanho = tk.Spinbox(
+    frame_tamanho,
+    from_=4,
+    to=50,
+    width=5,
+    bg="gray20",
     fg=COR_TEXTO,
-    bg=COR_FUNDO
-).grid(row=1, column=0, columnspan=2, pady=10)
+    insertbackground=COR_TEXTO,
+    justify='center'
+)
+entrada_tamanho.delete(0, 'end')
+entrada_tamanho.insert(0, "12")
+entrada_tamanho.pack(side='left', padx=5)
+
+# Tipos de Caracteres
+frame_tipos = tk.Frame(frame_card, bg=COR_CARD)
+frame_tipos.pack(fill='x', padx=15, pady=10)
 
 
-# Função auxiliar para criar Checkbuttons com as cores configuradas
 def criar_checkbox(parent, text, variable):
     return tk.Checkbutton(
         parent,
         text=text,
         variable=variable,
+        font=("Arial", 9),
         fg=COR_TEXTO,
-        bg=COR_FUNDO,
+        bg=COR_CARD,
         selectcolor="gray20",
-        activebackground=COR_FUNDO,
+        activebackground=COR_CARD,
         activeforeground=COR_TEXTO
     )
 
 
-# 3. Checkboxes (LADO A LADO)
+# Checkboxes em duas colunas
+chk_maiuscula = criar_checkbox(frame_tipos, "Letras Maiúsculas (ABC)", var_maiuscula)
+chk_maiuscula.grid(row=0, column=0, sticky='w', pady=3)
 
-# Usaremos a linha 2 para os primeiros dois e a linha 3 para os dois últimos.
-# Cada linha terá 2 colunas.
-linha_checkbox = 2
+chk_minuscula = criar_checkbox(frame_tipos, "Letras Minúsculas (abc)", var_minuscula)
+chk_minuscula.grid(row=1, column=0, sticky='w', pady=3)
 
-chk_maiuscula = criar_checkbox(frame_opcoes, "Maiúsculas", var_maiuscula)
-chk_maiuscula.grid(row=linha_checkbox, column=0, sticky='w', padx=5)
+chk_numeros = criar_checkbox(frame_tipos, "Números (123)", var_numeros)
+chk_numeros.grid(row=0, column=1, sticky='w', pady=3, padx=(20, 0))
 
-chk_minuscula = criar_checkbox(frame_opcoes, "Minúsculas", var_minuscula)
-chk_minuscula.grid(row=linha_checkbox, column=1, sticky='w', padx=5)
+chk_especiais = criar_checkbox(frame_tipos, "Caracteres Especiais (@#!)", var_especiais)
+chk_especiais.grid(row=1, column=1, sticky='w', pady=3, padx=(20, 0))
 
-# Próxima linha para os restantes
-linha_checkbox += 1
-
-chk_numeros = criar_checkbox(frame_opcoes, "Números", var_numeros)
-chk_numeros.grid(row=linha_checkbox, column=0, sticky='w', padx=5)
-
-chk_especiais = criar_checkbox(frame_opcoes, "Especiais", var_especiais)
-chk_especiais.grid(row=linha_checkbox, column=1, sticky='w', padx=5)
-
-# 4. Botão Gerar Senha
+# Botão Gerar
 btn_gerar = tk.Button(
-    janela,
-    text="Gerar Senha",
+    frame_card,
+    text="🔄 Gerar Senha",
     command=gerar_senha,
-    bg="#4CAF50",
+    bg=COR_PRIMARIA,
     fg="white",
-    font=("Helvetica", 12, "bold")
+    font=("Arial", 11, "bold"),
+    relief=tk.FLAT,
+    cursor="hand2"
 )
-# Note que os widgets abaixo do frame não precisam de alterações, pois usam .pack()
-btn_gerar.pack(pady=15, ipadx=10, ipady=5)
+btn_gerar.pack(pady=15, ipadx=20, ipady=8)
 
-# 5. Campo para Exibir a Senha
+# Seção de Resultado
+label_resultado = tk.Label(
+    frame_card,
+    text="Sua Senha Gerada",
+    font=("Arial", 12, "bold"),
+    fg=COR_TEXTO,
+    bg=COR_CARD
+)
+label_resultado.pack(anchor='w', padx=15, pady=(10, 5))
+
+# Campo da Senha com botão de visibilidade
+frame_senha = tk.Frame(frame_card, bg=COR_CARD)
+frame_senha.pack(fill='x', padx=15, pady=5)
+
 entrada_senha = tk.Entry(
-    janela,
+    frame_senha,
     textvariable=senha_gerada,
-    width=35,
-    font=("Courier", 12),
+    width=30,
+    font=("Courier", 12, "bold"),
     relief=tk.SUNKEN,
     bg="gray15",
-    fg="yellow",
-    insertbackground="yellow"
+    fg=COR_DESTAQUE,
+    insertbackground=COR_DESTAQUE,
+    show='•',
+    justify='center'
 )
-entrada_senha.pack(pady=10, padx=20)
+entrada_senha.pack(side='left', fill='x', expand=True, ipady=8)
 
-# 6. Botão Copiar Senha
-btn_copiar = tk.Button(
-    janela,
-    text="Copiar Senha",
-    command=copiar_senha,
-    bg="#2196F3",
-    fg="white",
-    font=("Helvetica", 10)
+btn_visibilidade = tk.Button(
+    frame_senha,
+    text="👁️",
+    command=alternar_visibilidade_senha,
+    bg="gray30",
+    fg=COR_TEXTO,
+    font=("Arial", 10),
+    width=3,
+    relief=tk.FLAT
 )
-btn_copiar.pack(pady=5)
+btn_visibilidade.pack(side='right', padx=(5, 0), ipady=4)
+
+# Indicador de Força da Senha
+frame_forca = tk.Frame(frame_card, bg=COR_CARD)
+frame_forca.pack(fill='x', padx=15, pady=(10, 5))
+
+label_forca = tk.Label(
+    frame_forca,
+    text="Força da Senha:",
+    font=("Arial", 9),
+    fg=COR_TEXTO,
+    bg=COR_CARD
+)
+label_forca.pack(anchor='w')
+
+barra_forca = ttk.Progressbar(
+    frame_forca,
+    orient='horizontal',
+    length=100,
+    mode='determinate',
+    style="Red.Horizontal.TProgressbar"
+)
+barra_forca.pack(fill='x', pady=5)
+
+# Botões de Ação
+frame_botoes = tk.Frame(frame_card, bg=COR_CARD)
+frame_botoes.pack(pady=15)
+
+btn_copiar = tk.Button(
+    frame_botoes,
+    text="📋 Copiar Senha",
+    command=copiar_senha,
+    bg=COR_SECUNDARIA,
+    fg="white",
+    font=("Arial", 10, "bold"),
+    relief=tk.FLAT,
+    cursor="hand2"
+)
+btn_copiar.pack(side='left', padx=5, ipadx=15, ipady=6)
+
+# Rodapé
+frame_rodape = tk.Frame(janela, bg=COR_FUNDO)
+frame_rodape.pack(pady=10)
+
+texto_dicas = tk.Label(
+    frame_rodape,
+    text="💡 Dica: Use senhas com pelo menos 12 caracteres e combine diferentes tipos",
+    font=("Arial", 8),
+    fg="#888888",
+    bg=COR_FUNDO,
+    wraplength=400
+)
+texto_dicas.pack()
+
+# --- Inicialização ---
+atualizar_forca_senha("")
 
 # --- Loop Principal ---
 janela.mainloop()
